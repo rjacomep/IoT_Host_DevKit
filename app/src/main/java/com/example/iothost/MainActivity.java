@@ -1,66 +1,121 @@
 package com.example.iothost;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.view.View;
-import android.view.Menu;
+import android.widget.TextView;
 
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
 
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import com.example.iothost.databinding.ActivityMainBinding;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    private AppBarConfiguration mAppBarConfiguration;
-    private ActivityMainBinding binding;
+
+    TextView GyroX,GyroY, GyroZ, AccelX, AccelY, AccelZ;
+    SensorManager sensorManager;
+    Sensor gyroscope;
+    Sensor accelerometer;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
-        setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null)
-                        .setAnchorView(R.id.fab).show();
-            }
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
         });
-        DrawerLayout drawer = binding.drawerLayout;
-        NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
-                .setOpenableLayout(drawer)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Obtener el SensorManager
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        // Obtener los sensore: acelerómetro, giroscopio
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+
+        GyroX = findViewById(R.id.tvX);
+        GyroY = findViewById(R.id.tvY);
+        GyroZ = findViewById(R.id.tvZ);
+
+        AccelX = findViewById(R.id.acX);
+        AccelY = findViewById(R.id.acY);
+        AccelZ = findViewById(R.id.acZ);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    public void onResume(){
+        // Registrar el listener para ambos sensores
+        super.onResume();
+        if (accelerometer != null) {
+            sensorManager.registerListener(gyroListener,gyroscope,SensorManager.SENSOR_DELAY_FASTEST);
+        }
+        if (gyroscope != null) {
+            sensorManager.registerListener(accelListener,accelerometer,SensorManager.SENSOR_DELAY_FASTEST);
+        }
+
+
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
+    public void onStop(){
+        super.onStop();
+        sensorManager.unregisterListener(gyroListener);
     }
+    // Configurar el SensorEventListener para manejar los cambios de los sensores
+    public SensorEventListener gyroListener = new SensorEventListener(){
+        @SuppressLint("SetTextI18n")
+        @Override
+        public void onSensorChanged(SensorEvent event){
+            float x = event.values[0];
+            float y = event.values[0];
+            float z = event.values[0];
+
+            GyroX.setText("Gyro X: " + x);
+            GyroY.setText("Gyro Y: " + y);
+            GyroZ.setText("Gyro Z: " + z);
+
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor gyroscope, int i){
+
+        }
+    };
+    public SensorEventListener accelListener = new SensorEventListener(){
+        @SuppressLint("SetTextI18n")
+        @Override
+        public void onSensorChanged(SensorEvent event){
+            float x = event.values[0];
+            float y = event.values[0];
+            float z = event.values[0];
+
+            AccelX.setText("Accel X: " + x);
+            AccelY.setText("Accel Y: " + y);
+            AccelZ.setText("Accel Z: " + z);
+
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor accelerometer, int i){
+
+        }
+    };
+
+
+
 }
